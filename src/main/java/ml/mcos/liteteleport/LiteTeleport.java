@@ -280,7 +280,7 @@ public class LiteTeleport extends JavaPlugin implements Listener {
             cdList.put(player.getUniqueId(), System.currentTimeMillis());
         }
         player.sendMessage(message);
-        player.teleportAsync(location);
+        player.getWorld().getChunkAtAsync(location).thenRunAsync(()-> player.teleportAsync(location)); //当区块加载完成后再传送
     }
 
     private boolean compareLoc(Location loc1, Location loc2) {
@@ -604,10 +604,7 @@ public class LiteTeleport extends JavaPlugin implements Listener {
                     player.sendTitle(Language.commandTprTitle, Language.commandTprSubtitle, 20, 160, 20);
                 }
             }
-            loc = RandomTeleport.getRandomLoc(player);
-        }
-        if (mcVersion > 10) {
-            player.sendTitle("", "", 0, 0, 0);
+            loc = RandomTeleport.getRandomLoc(player,plugin);
         }
         if (loc == null) {
             player.sendMessage(Language.commandTprNotFoundSafeLocation);

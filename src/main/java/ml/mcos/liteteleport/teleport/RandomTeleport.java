@@ -1,12 +1,15 @@
 package ml.mcos.liteteleport.teleport;
 
+import io.papermc.paper.threadedregions.scheduler.ScheduledTask;
 import ml.mcos.liteteleport.LiteTeleport;
 import ml.mcos.liteteleport.config.Config;
+import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.World;
 import org.bukkit.block.Block;
 import org.bukkit.entity.Player;
+import org.bukkit.plugin.Plugin;
 
 import java.util.Random;
 
@@ -51,18 +54,23 @@ public class RandomTeleport {
         return typeR1.toString().toUpperCase().endsWith("FIRE"); //如果上面一个方块是火或者灵魂火，视为非安全
     }
 
-    public static Location getRandomLoc(Player player) {
+    public static Location getRandomLoc(Player player, Plugin plugin) {
         Location centerLoc = Config.tprCenter ? player.getWorld().getSpawnLocation() : player.getLocation(), randomLoc = centerLoc.clone();
         boolean flag = true;
         for (int i = 0; i < 14; i++) {
             randomXZ(randomLoc, Config.tprMaxRadius, Config.tprMinRadius);
-            randomLoc.setY(player.getWorld().getHighestBlockYAt(randomLoc));
-            if (LiteTeleport.mcVersion < 15) {
-                randomLoc.setY(randomLoc.getY() - 1);
-            }
-            if (isUnsafeLoc(player.getWorld(), (int) randomLoc.getX(), (int) randomLoc.getY(), (int) randomLoc.getZ())) {
-                randomLoc.setX(centerLoc.getX());
-                randomLoc.setZ(centerLoc.getZ());
+            ScheduledTask t = Bukkit.getRegionScheduler().run(plugin,randomLoc, task -> {
+                randomLoc.setY(player.getWorld().getHighestBlockYAt(randomLoc));
+                if (LiteTeleport.mcVersion < 15) {
+                    randomLoc.setY(randomLoc.getY() - 1);
+                }
+                if (isUnsafeLoc(player.getWorld(), (int) randomLoc.getX(), (int) randomLoc.getY(), (int) randomLoc.getZ())) {
+                    randomLoc.setX(centerLoc.getX());
+                    randomLoc.setZ(centerLoc.getZ());
+                    task.cancel();
+                }
+            });
+            if(t.isCancelled()){
                 continue;
             }
             flag = false;
