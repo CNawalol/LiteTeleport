@@ -1,5 +1,6 @@
 package ml.mcos.liteteleport;
 
+import io.papermc.paper.threadedregions.scheduler.ScheduledTask;
 import ml.mcos.liteteleport.config.*;
 import ml.mcos.liteteleport.consume.ConsumeInfo;
 import ml.mcos.liteteleport.metrics.Metrics;
@@ -24,12 +25,12 @@ import org.bukkit.event.player.PlayerTeleportEvent;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.RegisteredServiceProvider;
 import org.bukkit.plugin.java.JavaPlugin;
-import org.bukkit.scheduler.BukkitTask;
 
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 
 public class LiteTeleport extends JavaPlugin implements Listener {
@@ -251,11 +252,12 @@ public class LiteTeleport extends JavaPlugin implements Listener {
         }
         player.sendMessage(Language.replaceArgs(Language.teleportDelay, Config.tpDelay));
         plugin.sendMessage(String.valueOf(System.currentTimeMillis()));
-        getServer().getScheduler().runTaskTimer(plugin, new Consumer<BukkitTask>() {
+        getServer().getAsyncScheduler().runAtFixedRate(plugin, new Consumer<>() {
             int i = Config.tpDelay;
             final Location pos = player.getLocation();
+
             @Override
-            public void accept(BukkitTask bukkitTask) {
+            public void accept(ScheduledTask bukkitTask) {
                 i--;
                 if (!compareLoc(pos, player.getLocation())) {
                     player.sendMessage(Language.teleportCancel);
@@ -269,7 +271,7 @@ public class LiteTeleport extends JavaPlugin implements Listener {
                     bukkitTask.cancel();
                 }
             }
-        }, 20, 20);
+        }, 1, 1, TimeUnit.SECONDS);
 
     }
 
@@ -278,7 +280,7 @@ public class LiteTeleport extends JavaPlugin implements Listener {
             cdList.put(player.getUniqueId(), System.currentTimeMillis());
         }
         player.sendMessage(message);
-        player.teleport(location);
+        player.teleportAsync(location);
     }
 
     private boolean compareLoc(Location loc1, Location loc2) {

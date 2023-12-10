@@ -16,7 +16,7 @@ public class UpdateChecker {
     public static Timer timer;
 
     public static void start() {
-        plugin.getServer().getScheduler().runTask(plugin, () -> {
+        plugin.getServer().getAsyncScheduler().runNow(plugin, (con) -> {
             timer = new Timer();
             timer.schedule(new TimerTask() {
                 @Override
